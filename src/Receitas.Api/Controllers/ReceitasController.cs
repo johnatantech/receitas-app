@@ -12,13 +12,14 @@ public class ReceitasController : ControllerBase
 
     public ReceitasController(IMealDbClient client) => _client = client;
 
-    // GET /api/receitas?ingredientes=chicken,garlic
+    // GET /api/receitas?ingredientes=chicken,garlic,onion&limite=20
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<ReceitaResumo>>> Buscar(
+    public async Task<ActionResult<IReadOnlyList<ReceitaRanqueada>>> Buscar(
         [FromQuery] string ingredientes,
-        CancellationToken ct)
+        [FromQuery] int limite = 20,
+        CancellationToken ct = default)
     {
-        var lista = ingredientes
+        var lista = (ingredientes ?? "")
             .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
@@ -26,16 +27,31 @@ public class ReceitasController : ControllerBase
         if (lista.Count == 0)
             return BadRequest("Informe ao menos um ingrediente.");
 
-        var resultados = await Task.WhenAll(
+        limite = Math.Clamp(limite, 1, 30);
+
+        // 1. Uma busca por ingrediente, em paralelo
+        var buscas = await Task.WhenAll(
             lista.Select(i => _client.BuscarPorIngredienteAsync(i, ct)));
 
-        // Interseção: só receitas que aparecem em TODAS as buscas
-        var comum = resultados
-            .Skip(1)
-            .Aggregate(
-                resultados[0].Select(r => r.Id).ToHashSet(),
-                (acc, atual) => { acc.IntersectWith(atual.Select(r => r.Id)); return acc; });
+        // 2. União: receitas que aparecem em mais buscas vêm primeiro
+        var candidatos = buscas
+            .SelectMany(b => b)
+            .GroupBy(r => r.Id)
+            .OrderByDescending(g => g.Count())
+            .Take(limite)
+            .Select(g => g.Key)
+            .ToList();
 
-        return Ok(resultados[0].Where(r => comum.Contains(r.Id)));
+        // 3. Detalhe de cada candidato (a maioria vem do cache)
+        var detalhes = await Task.WhenAll(
+            candidatos.Select(id => _client.BuscarDetalheAsync(id, ct)));
+
+        // 4. Compatibilidade + ordenação
+        var ranqueadas = RankingService.Ordenar(
+            detalhes
+                .Where(d => d is not null)
+                .Select(d => RankingService.Calcular(lista, d!)));
+
+        return Ok(ranqueadas);
     }
 }

@@ -8,6 +8,8 @@ builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
+builder.Services.AddMemoryCache();
+
 builder.Services.AddHttpClient<IMealDbClient, MealDbClient>(c =>
 {
     c.BaseAddress = new Uri("https://www.themealdb.com/api/json/v1/1/");
