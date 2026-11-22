@@ -61,4 +61,13 @@ public class ReceitasController : ControllerBase
 
         return Ok(traduzidas);
     }
+
+    // GET /api/receitas/52795
+    [HttpGet("{id}")]
+    public async Task<ActionResult<ReceitaCompleta>> Detalhe(
+        string id, CancellationToken ct)
+    {
+        var receita = await _client.BuscarCompletaAsync(id, ct);
+        return receita is null ? NotFound() : Ok(receita);
+    }
 }

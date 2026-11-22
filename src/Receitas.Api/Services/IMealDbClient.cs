@@ -9,4 +9,7 @@ public interface IMealDbClient
 
     Task<ReceitaDetalhe?> BuscarDetalheAsync(
         string id, CancellationToken ct = default);
+
+    Task<ReceitaCompleta?> BuscarCompletaAsync(
+        string id, CancellationToken ct = default);
 }
