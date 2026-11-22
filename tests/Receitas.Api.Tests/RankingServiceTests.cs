@@ -73,8 +73,18 @@ public class RankingServiceTests
     }
 
     [Fact]
+    public void Ordena_PorCompatibilidade_DepoisPorQuantidadeUsada()
+    {
+        var a = RankingService.Calcular(["a", "b"], Receita("A", "a", "b", "c", "d"));      // 50%, usa 2
+        var b = RankingService.Calcular(["a", "b"], Receita("B", "a", "x"));                // 50%, usa 1
+        var c = RankingService.Calcular(["a", "b"], Receita("C", "a", "b"));                // 100%
 
-        [Theory]
+        var ordenadas = RankingService.Ordenar([b, a, c]);
+
+        Assert.Equal(["C", "A", "B"], ordenadas.Select(r => r.Titulo));
+    }
+
+    [Theory]
     [InlineData("Salt", true)]
     [InlineData("Black Pepper", true)]
     [InlineData("Chicken", false)]
@@ -88,14 +98,4 @@ public class RankingServiceTests
     public void CorrespondeIngredienteDaReceitaAoDoUsuario(
         string daReceita, string doUsuario, bool esperado) =>
         Assert.Equal(esperado, RankingService.Corresponde(daReceita, doUsuario));
-    public void Ordena_PorCompatibilidade_DepoisPorQuantidadeUsada()
-    {
-        var a = RankingService.Calcular(["a", "b"], Receita("A", "a", "b", "c", "d"));      // 50%, usa 2
-        var b = RankingService.Calcular(["a", "b"], Receita("B", "a", "x"));                // 50%, usa 1
-        var c = RankingService.Calcular(["a", "b"], Receita("C", "a", "b"));                // 100%
-
-        var ordenadas = RankingService.Ordenar([b, a, c]);
-
-        Assert.Equal(["C", "A", "B"], ordenadas.Select(r => r.Titulo));
-    }
 }

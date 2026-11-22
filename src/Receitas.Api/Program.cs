@@ -10,6 +10,12 @@ builder.Services.AddOpenApi();
 
 builder.Services.AddMemoryCache();
 
+builder.Services.AddHttpClient<ITradutor, MyMemoryTradutor>(c =>
+{
+    c.BaseAddress = new Uri("https://api.mymemory.translated.net/");
+    c.Timeout = TimeSpan.FromSeconds(20);
+});
+
 builder.Services.AddHttpClient<IMealDbClient, MealDbClient>(c =>
 {
     c.BaseAddress = new Uri("https://www.themealdb.com/api/json/v1/1/");

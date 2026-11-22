@@ -9,8 +9,13 @@ namespace Receitas.Api.Controllers;
 public class ReceitasController : ControllerBase
 {
     private readonly IMealDbClient _client;
+    private readonly ITradutor _tradutor;
 
-    public ReceitasController(IMealDbClient client) => _client = client;
+    public ReceitasController(IMealDbClient client, ITradutor tradutor)
+    {
+        _client = client;
+        _tradutor = tradutor;
+    }
 
     // GET /api/receitas?ingredientes=frango,alho,cebola&limite=20
     [HttpGet]
@@ -45,7 +50,6 @@ public class ReceitasController : ControllerBase
                 .Where(d => d is not null)
                 .Select(d => RankingService.Calcular(lista, d!)));
 
-        // Traduz de volta só para exibição (o ranking já foi calculado em inglês)
         var traduzidas = ranqueadas
             .Select(r => r with
             {
@@ -69,7 +73,6 @@ public class ReceitasController : ControllerBase
 
         var doUsuario = ParseIngredientes(ingredientes);
 
-        // "with" cria cópias: o objeto em cache não é alterado
         var marcados = receita.Ingredientes
             .Select(i => i with
             {
@@ -88,14 +91,19 @@ public class ReceitasController : ControllerBase
                 : (int)Math.Round(100.0 * relevantes.Count(i => i.Possui) / relevantes.Count);
         }
 
+        // null quando a tradução falha: o front mostra o original
+        var instrucoesPt = string.IsNullOrWhiteSpace(receita.Instrucoes)
+            ? null
+            : await _tradutor.ParaPortuguesAsync(receita.Instrucoes, ct);
+
         return Ok(receita with
         {
             Ingredientes = marcados,
-            Compatibilidade = compatibilidade
+            Compatibilidade = compatibilidade,
+            InstrucoesPt = instrucoesPt
         });
     }
 
-    // "frango, Alho" → ["chicken", "garlic"] (o que não está no dicionário passa como veio)
     private static List<string> ParseIngredientes(string? texto) =>
         (texto ?? "")
             .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)

@@ -19,4 +19,5 @@ public record ReceitaCompleta(
 )
 {
     public int? Compatibilidade { get; init; }
+    public string? InstrucoesPt { get; init; }
 }
