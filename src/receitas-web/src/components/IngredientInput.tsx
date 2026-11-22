@@ -8,17 +8,17 @@ interface Props {
 export function IngredientInput({ ingredientes, onChange }: Props) {
   const [texto, setTexto] = useState("");
 
-function adicionar() {
-  const novos = texto
-    .split(/,|\se\s/i)
-    .map((s) => s.trim().toLowerCase())
-    .filter((s) => s && !ingredientes.includes(s));
+  function adicionar() {
+    const novos = texto
+      .split(/,|\se\s/i)
+      .map((s) => s.trim().toLowerCase())
+      .filter((s) => s && !ingredientes.includes(s));
 
-  if (novos.length > 0) {
-    onChange([...ingredientes, ...new Set(novos)]);
+    if (novos.length > 0) {
+      onChange([...ingredientes, ...new Set(novos)]);
+    }
+    setTexto("");
   }
-  setTexto("");
-}
 
   return (
     <div>
@@ -26,16 +26,27 @@ function adicionar() {
         {ingredientes.map((i) => (
           <span
             key={i}
-            style={{ background: "#e0e7ff", color: "#1e1b4b", padding: "4px 10px", borderRadius: 999 }}
+            style={{
+              background: "#e0e7ff",
+              color: "#1e1b4b",
+              padding: "4px 10px",
+              borderRadius: 999,
+            }}
           >
             {i}{" "}
-      <button
-  aria-label={`Remover ${i}`}
-  onClick={() => onChange(ingredientes.filter((x) => x !== i))}
-  style={{ border: "none", background: "none", cursor: "pointer", color: "#1e1b4b", fontSize: 16 }}
->
-  ×
-</button>
+            <button
+              aria-label={`Remover ${i}`}
+              onClick={() => onChange(ingredientes.filter((x) => x !== i))}
+              style={{
+                border: "none",
+                background: "none",
+                cursor: "pointer",
+                color: "#1e1b4b",
+                fontSize: 16,
+              }}
+            >
+              ×
+            </button>
           </span>
         ))}
       </div>
