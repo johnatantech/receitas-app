@@ -19,12 +19,7 @@ public class ReceitasController : ControllerBase
         [FromQuery] int limite = 20,
         CancellationToken ct = default)
     {
-        // Traduz PT→EN (o que não estiver no dicionário passa como veio)
-        var lista = (ingredientes ?? "")
-            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .Select(TraducaoService.ParaIngles)
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .ToList();
+        var lista = ParseIngredientes(ingredientes);
 
         if (lista.Count == 0)
             return BadRequest("Informe ao menos um ingrediente.");
@@ -62,12 +57,49 @@ public class ReceitasController : ControllerBase
         return Ok(traduzidas);
     }
 
-    // GET /api/receitas/52795
+    // GET /api/receitas/52795?ingredientes=frango,alho
     [HttpGet("{id}")]
     public async Task<ActionResult<ReceitaCompleta>> Detalhe(
-        string id, CancellationToken ct)
+        string id,
+        [FromQuery] string? ingredientes,
+        CancellationToken ct)
     {
         var receita = await _client.BuscarCompletaAsync(id, ct);
-        return receita is null ? NotFound() : Ok(receita);
+        if (receita is null) return NotFound();
+
+        var doUsuario = ParseIngredientes(ingredientes);
+
+        // "with" cria cópias: o objeto em cache não é alterado
+        var marcados = receita.Ingredientes
+            .Select(i => i with
+            {
+                NomePt = TraducaoService.ParaPortugues(i.Nome),
+                Basico = RankingService.EhBasico(i.Nome),
+                Possui = doUsuario.Any(u => RankingService.Corresponde(i.Nome, u))
+            })
+            .ToList();
+
+        int? compatibilidade = null;
+        if (doUsuario.Count > 0)
+        {
+            var relevantes = marcados.Where(i => !i.Basico).ToList();
+            compatibilidade = relevantes.Count == 0
+                ? 0
+                : (int)Math.Round(100.0 * relevantes.Count(i => i.Possui) / relevantes.Count);
+        }
+
+        return Ok(receita with
+        {
+            Ingredientes = marcados,
+            Compatibilidade = compatibilidade
+        });
     }
+
+    // "frango, Alho" → ["chicken", "garlic"] (o que não está no dicionário passa como veio)
+    private static List<string> ParseIngredientes(string? texto) =>
+        (texto ?? "")
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(TraducaoService.ParaIngles)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
 }

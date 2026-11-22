@@ -1,6 +1,7 @@
-import { Link, useParams, useSearchParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { buscarReceita } from "../api/receitas";
+import { useIngredientes } from "../hooks/useIngredientes";
 
 function idDoYoutube(url: string): string | null {
   try {
@@ -12,12 +13,12 @@ function idDoYoutube(url: string): string | null {
 
 export default function RecipeDetail() {
   const { id = "" } = useParams();
-  const [params] = useSearchParams();
-  const busca = params.get("ingredientes") ?? "";
+  const [ingredientes] = useIngredientes();
+  const busca = ingredientes.join(",");
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ["receita", id],
-    queryFn: () => buscarReceita(id),
+    queryKey: ["receita", id, busca],
+    queryFn: () => buscarReceita(id, ingredientes),
     retry: false,
   });
 
@@ -51,6 +52,10 @@ export default function RecipeDetail() {
     .map((p) => p.trim())
     .filter(Boolean);
 
+  const temBusca = data.compatibilidade !== null;
+  const relevantes = data.ingredientes.filter((i) => !i.basico);
+  const quantosTem = relevantes.filter((i) => i.possui).length;
+
   return (
     <article>
       {voltar}
@@ -66,13 +71,55 @@ export default function RecipeDetail() {
       />
 
       <h2>Ingredientes</h2>
-      <ul>
-        {data.ingredientes.map((i) => (
-          <li key={i.nome}>
-            {i.medida && <strong>{i.medida} </strong>}
-            {i.nome}
-          </li>
-        ))}
+
+      {temBusca && (
+        <p style={{ fontWeight: 600 }}>
+          Você tem {quantosTem} de {relevantes.length} ingredientes (
+          {data.compatibilidade}% compatível)
+        </p>
+      )}
+
+      <ul style={{ listStyle: "none", padding: 0 }}>
+        {data.ingredientes.map((i) => {
+          let marca = "";
+          let cor = "inherit";
+          let rotulo = "";
+
+          if (temBusca) {
+            if (i.basico) {
+              marca = "•";
+              cor = "#9ca3af";
+              rotulo = "item básico";
+            } else if (i.possui) {
+              marca = "✓";
+              cor = "#16a34a";
+              rotulo = "você tem";
+            } else {
+              marca = "✗";
+              cor = "#dc2626";
+              rotulo = "falta";
+            }
+          }
+
+          return (
+            <li key={i.nome} style={{ padding: "4px 0" }}>
+              {temBusca && (
+                <span
+                  aria-label={rotulo}
+                  title={rotulo}
+                  style={{ color: cor, fontWeight: 700, marginRight: 8 }}
+                >
+                  {marca}
+                </span>
+              )}
+              {i.medida && <strong>{i.medida} </strong>}
+              {i.nomePt}
+              {i.nomePt.toLowerCase() !== i.nome.toLowerCase() && (
+                <span style={{ color: "#9ca3af" }}> ({i.nome})</span>
+              )}
+            </li>
+          );
+        })}
       </ul>
 
       <h2>Modo de preparo</h2>

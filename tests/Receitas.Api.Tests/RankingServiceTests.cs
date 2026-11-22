@@ -73,6 +73,21 @@ public class RankingServiceTests
     }
 
     [Fact]
+
+        [Theory]
+    [InlineData("Salt", true)]
+    [InlineData("Black Pepper", true)]
+    [InlineData("Chicken", false)]
+    public void IdentificaIngredientesBasicos(string ingrediente, bool esperado) =>
+        Assert.Equal(esperado, RankingService.EhBasico(ingrediente));
+
+    [Theory]
+    [InlineData("Chicken Breasts", "chicken", true)]
+    [InlineData("Onions", "onion", true)]
+    [InlineData("Garlic", "chicken", false)]
+    public void CorrespondeIngredienteDaReceitaAoDoUsuario(
+        string daReceita, string doUsuario, bool esperado) =>
+        Assert.Equal(esperado, RankingService.Corresponde(daReceita, doUsuario));
     public void Ordena_PorCompatibilidade_DepoisPorQuantidadeUsada()
     {
         var a = RankingService.Calcular(["a", "b"], Receita("A", "a", "b", "c", "d"));      // 50%, usa 2

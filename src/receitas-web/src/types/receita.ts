@@ -9,7 +9,10 @@ export interface ReceitaRanqueada {
 
 export interface IngredienteComMedida {
   nome: string;
+  nomePt: string;
   medida: string;
+  possui: boolean;
+  basico: boolean;
 }
 
 export interface ReceitaCompleta {
@@ -20,5 +23,6 @@ export interface ReceitaCompleta {
   area: string | null;
   instrucoes: string | null;
   video: string | null;
+  compatibilidade: number | null;
   ingredientes: IngredienteComMedida[];
 }

@@ -1,6 +1,11 @@
 namespace Receitas.Api.Models;
 
-public record IngredienteComMedida(string Nome, string Medida);
+public record IngredienteComMedida(string Nome, string Medida)
+{
+    public string NomePt { get; init; } = Nome;
+    public bool Possui { get; init; }
+    public bool Basico { get; init; }
+}
 
 public record ReceitaCompleta(
     string Id,
@@ -11,4 +16,7 @@ public record ReceitaCompleta(
     string? Instrucoes,
     string? Video,
     IReadOnlyList<IngredienteComMedida> Ingredientes
-);
+)
+{
+    public int? Compatibilidade { get; init; }
+}

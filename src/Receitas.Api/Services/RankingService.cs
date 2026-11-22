@@ -10,11 +10,14 @@ public static class RankingService
         "salt", "water", "pepper", "black pepper", "ground black pepper"
     };
 
+    public static bool EhBasico(string ingrediente) =>
+        Basicos.Contains(Normalizar(ingrediente));
+
     public static ReceitaRanqueada Calcular(
         IReadOnlyCollection<string> doUsuario, ReceitaDetalhe receita)
     {
         var relevantes = receita.Ingredientes
-            .Where(i => !Basicos.Contains(Normalizar(i)))
+            .Where(i => !EhBasico(i))
             .ToList();
 
         var possui = relevantes
@@ -43,7 +46,7 @@ public static class RankingService
             .ToList();
 
     // "chicken" corresponde a "Chicken Breasts"; "onion" corresponde a "Onions"
-    private static bool Corresponde(string ingredienteReceita, string ingredienteUsuario)
+    public static bool Corresponde(string ingredienteReceita, string ingredienteUsuario)
     {
         var receita = Palavras(ingredienteReceita);
         var usuario = Palavras(ingredienteUsuario);
