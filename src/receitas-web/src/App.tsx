@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { buscarReceitas } from "./api/receitas";
 import { IngredientInput } from "./components/IngredientInput";
+import { RecipeCard } from "./components/RecipeCard";
 
 export default function App() {
   const [ingredientes, setIngredientes] = useState<string[]>([]);
@@ -30,10 +31,7 @@ export default function App() {
         }}
       >
         {data?.map((r) => (
-          <article key={r.id} style={{ border: "1px solid #ddd", borderRadius: 8, overflow: "hidden" }}>
-            <img src={r.imagem} alt={r.titulo} style={{ width: "100%", display: "block" }} />
-            <h3 style={{ padding: "0 12px", fontSize: 16 }}>{r.titulo}</h3>
-          </article>
+          <RecipeCard key={r.id} receita={r} />
         ))}
       </div>
     </main>
