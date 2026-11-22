@@ -12,15 +12,17 @@ public class ReceitasController : ControllerBase
 
     public ReceitasController(IMealDbClient client) => _client = client;
 
-    // GET /api/receitas?ingredientes=chicken,garlic,onion&limite=20
+    // GET /api/receitas?ingredientes=frango,alho,cebola&limite=20
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<ReceitaRanqueada>>> Buscar(
         [FromQuery] string ingredientes,
         [FromQuery] int limite = 20,
         CancellationToken ct = default)
     {
+        // Traduz PT→EN (o que não estiver no dicionário passa como veio)
         var lista = (ingredientes ?? "")
             .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(TraducaoService.ParaIngles)
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
 
@@ -29,11 +31,9 @@ public class ReceitasController : ControllerBase
 
         limite = Math.Clamp(limite, 1, 30);
 
-        // 1. Uma busca por ingrediente, em paralelo
         var buscas = await Task.WhenAll(
             lista.Select(i => _client.BuscarPorIngredienteAsync(i, ct)));
 
-        // 2. União: receitas que aparecem em mais buscas vêm primeiro
         var candidatos = buscas
             .SelectMany(b => b)
             .GroupBy(r => r.Id)
@@ -42,16 +42,23 @@ public class ReceitasController : ControllerBase
             .Select(g => g.Key)
             .ToList();
 
-        // 3. Detalhe de cada candidato (a maioria vem do cache)
         var detalhes = await Task.WhenAll(
             candidatos.Select(id => _client.BuscarDetalheAsync(id, ct)));
 
-        // 4. Compatibilidade + ordenação
         var ranqueadas = RankingService.Ordenar(
             detalhes
                 .Where(d => d is not null)
                 .Select(d => RankingService.Calcular(lista, d!)));
 
-        return Ok(ranqueadas);
+        // Traduz de volta só para exibição (o ranking já foi calculado em inglês)
+        var traduzidas = ranqueadas
+            .Select(r => r with
+            {
+                Possui = r.Possui.Select(TraducaoService.ParaPortugues).ToList(),
+                Faltando = r.Faltando.Select(TraducaoService.ParaPortugues).ToList()
+            })
+            .ToList();
+
+        return Ok(traduzidas);
     }
 }

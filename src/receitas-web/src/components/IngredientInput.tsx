@@ -8,13 +8,17 @@ interface Props {
 export function IngredientInput({ ingredientes, onChange }: Props) {
   const [texto, setTexto] = useState("");
 
-  function adicionar() {
-    const valor = texto.trim().toLowerCase();
-    if (valor && !ingredientes.includes(valor)) {
-      onChange([...ingredientes, valor]);
-    }
-    setTexto("");
+function adicionar() {
+  const novos = texto
+    .split(/,|\se\s/i)
+    .map((s) => s.trim().toLowerCase())
+    .filter((s) => s && !ingredientes.includes(s));
+
+  if (novos.length > 0) {
+    onChange([...ingredientes, ...new Set(novos)]);
   }
+  setTexto("");
+}
 
   return (
     <div>
@@ -44,7 +48,7 @@ export function IngredientInput({ ingredientes, onChange }: Props) {
             adicionar();
           }
         }}
-        placeholder="Digite um ingrediente (em inglês) e tecle Enter"
+        placeholder="Ex.: frango, alho, cebola (Enter para adicionar)"
         style={{ padding: 8, width: "100%", maxWidth: 400 }}
       />
     </div>
