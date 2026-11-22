@@ -22,6 +22,7 @@ export interface ReceitaCompleta {
   categoria: string | null;
   area: string | null;
   instrucoes: string | null;
+  instrucoesPt: string | null;
   video: string | null;
   compatibilidade: number | null;
   ingredientes: IngredienteComMedida[];

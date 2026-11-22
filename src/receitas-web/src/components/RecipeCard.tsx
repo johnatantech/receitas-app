@@ -1,10 +1,10 @@
 import { Link, useSearchParams } from "react-router-dom";
 import type { ReceitaRanqueada } from "../types/receita";
 
-function corDaBadge(pct: number) {
-  if (pct >= 80) return "#16a34a"; // verde
-  if (pct >= 50) return "#ca8a04"; // amarelo
-  return "#dc2626"; // vermelho
+function classeDaBadge(pct: number) {
+  if (pct >= 80) return "bg-emerald-600";
+  if (pct >= 50) return "bg-amber-600";
+  return "bg-rose-600";
 }
 
 export function RecipeCard({ receita }: { receita: ReceitaRanqueada }) {
@@ -14,39 +14,37 @@ export function RecipeCard({ receita }: { receita: ReceitaRanqueada }) {
   return (
     <Link
       to={`/receita/${receita.id}?ingredientes=${encodeURIComponent(busca)}`}
-      style={{ textDecoration: "none", color: "inherit" }}
+      className="group flex h-full flex-col overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg dark:border-stone-800 dark:bg-stone-900"
     >
-      <article
-        style={{ border: "1px solid #444", borderRadius: 8, overflow: "hidden", height: "100%" }}
-      >
+      <div className="relative aspect-[4/3] overflow-hidden bg-stone-200 dark:bg-stone-800">
         <img
           src={receita.imagem}
           alt={receita.titulo}
-          style={{ width: "100%", display: "block" }}
+          loading="lazy"
+          className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
         />
-        <div style={{ padding: 12 }}>
-          <span
-            style={{
-              background: corDaBadge(receita.compatibilidade),
-              color: "#fff",
-              padding: "2px 8px",
-              borderRadius: 999,
-              fontSize: 13,
-              fontWeight: 600,
-            }}
-          >
-            {receita.compatibilidade}% compatível
-          </span>
-          <h3 style={{ fontSize: 16, color: "#f3f4f6", margin: "8px 0" }}>
-            {receita.titulo}
-          </h3>
-          {receita.faltando.length > 0 && (
-            <p style={{ fontSize: 13, color: "#9ca3af", margin: 0 }}>
-              Falta: {receita.faltando.join(", ")}
-            </p>
-          )}
-        </div>
-      </article>
+        <span
+          className={`absolute left-3 top-3 rounded-full px-3 py-1 text-xs font-bold text-white shadow ${classeDaBadge(
+            receita.compatibilidade
+          )}`}
+        >
+          {receita.compatibilidade}% compatível
+        </span>
+      </div>
+
+      <div className="flex flex-1 flex-col gap-2 p-4">
+        <h3 className="font-semibold leading-snug">{receita.titulo}</h3>
+        {receita.faltando.length > 0 ? (
+          <p className="text-sm text-stone-500 dark:text-stone-400">
+            <span className="font-medium">Falta:</span>{" "}
+            {receita.faltando.join(", ")}
+          </p>
+        ) : (
+          <p className="text-sm font-medium text-emerald-600">
+            Você tem tudo! 🎉
+          </p>
+        )}
+      </div>
     </Link>
   );
 }

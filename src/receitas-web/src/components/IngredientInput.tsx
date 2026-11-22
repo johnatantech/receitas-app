@@ -21,47 +21,50 @@ export function IngredientInput({ ingredientes, onChange }: Props) {
   }
 
   return (
-    <div>
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
-        {ingredientes.map((i) => (
-          <span
-            key={i}
-            style={{
-              background: "#e0e7ff",
-              color: "#1e1b4b",
-              padding: "4px 10px",
-              borderRadius: 999,
-            }}
-          >
-            {i}{" "}
-            <button
-              aria-label={`Remover ${i}`}
-              onClick={() => onChange(ingredientes.filter((x) => x !== i))}
-              style={{
-                border: "none",
-                background: "none",
-                cursor: "pointer",
-                color: "#1e1b4b",
-                fontSize: 16,
-              }}
-            >
-              ×
-            </button>
-          </span>
-        ))}
+    <div className="space-y-3">
+      <div className="flex gap-2">
+        <input
+          value={texto}
+          onChange={(e) => setTexto(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === ",") {
+              e.preventDefault();
+              adicionar();
+            }
+          }}
+          placeholder="Ex.: frango, alho, cebola"
+          aria-label="Adicionar ingrediente"
+          className="w-full rounded-xl border border-stone-300 bg-white px-4 py-3 shadow-sm outline-none transition placeholder:text-stone-400 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/30 dark:border-stone-700 dark:bg-stone-900"
+        />
+        <button
+          type="button"
+          onClick={adicionar}
+          className="rounded-xl bg-amber-600 px-5 py-3 font-semibold text-white shadow-sm transition hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+        >
+          Adicionar
+        </button>
       </div>
-      <input
-        value={texto}
-        onChange={(e) => setTexto(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === ",") {
-            e.preventDefault();
-            adicionar();
-          }
-        }}
-        placeholder="Ex.: frango, alho, cebola (Enter para adicionar)"
-        style={{ padding: 8, width: "100%", maxWidth: 400 }}
-      />
+
+      {ingredientes.length > 0 && (
+        <ul className="flex flex-wrap gap-2">
+          {ingredientes.map((i) => (
+            <li
+              key={i}
+              className="flex items-center gap-1 rounded-full bg-amber-100 py-1 pl-3 pr-1 text-sm font-medium text-amber-900 dark:bg-amber-900/40 dark:text-amber-100"
+            >
+              {i}
+              <button
+                type="button"
+                aria-label={`Remover ${i}`}
+                onClick={() => onChange(ingredientes.filter((x) => x !== i))}
+                className="flex h-6 w-6 items-center justify-center rounded-full text-base leading-none transition hover:bg-amber-200 dark:hover:bg-amber-800"
+              >
+                ×
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
