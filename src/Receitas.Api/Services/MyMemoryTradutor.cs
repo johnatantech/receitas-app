@@ -87,7 +87,9 @@ public class MyMemoryTradutor : ITradutor
             || traduzido.Contains("MYMEMORY WARNING", StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException($"MyMemory respondeu status {status}.");
 
-        return WebUtility.HtmlDecode(traduzido);
+      // A MyMemory às vezes devolve tags internas (<g id="1">, <x id="2"/>)
+var semTags = Regex.Replace(traduzido, @"<[^>]+>", " ");
+return Regex.Replace(WebUtility.HtmlDecode(semTags), @"\s{2,}", " ").Trim();
     }
 
     /// <summary>Divide em trechos de até <paramref name="max"/> caracteres, cortando em frases.</summary>
