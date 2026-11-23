@@ -2,13 +2,14 @@ using Receitas.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-
 builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
-
 builder.Services.AddMemoryCache();
+
+builder.Services.AddHttpClient<IMealDbClient, MealDbClient>(c =>
+{
+    c.BaseAddress = new Uri("https://www.themealdb.com/api/json/v1/1/");
+});
 
 builder.Services.AddHttpClient<ITradutor, MyMemoryTradutor>(c =>
 {
@@ -16,32 +17,27 @@ builder.Services.AddHttpClient<ITradutor, MyMemoryTradutor>(c =>
     c.Timeout = TimeSpan.FromSeconds(20);
 });
 
-builder.Services.AddHttpClient<IMealDbClient, MealDbClient>(c =>
-{
-    c.BaseAddress = new Uri("https://www.themealdb.com/api/json/v1/1/");
-});
+// Origens permitidas: "Cors:Origins" (separadas por vírgula, sem barra no final)
+var origens = (builder.Configuration["Cors:Origins"] ?? "http://localhost:5173")
+    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
-// NOVO: CORS para o front em dev
 builder.Services.AddCors(o => o.AddPolicy("front", p =>
-    p.WithOrigins("http://localhost:5173")
+    p.WithOrigins(origens)
      .AllowAnyHeader()
      .AllowAnyMethod()));
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
 
-
 app.UseCors("front");
-
-app.UseHttpsRedirection();
-
 app.UseAuthorization();
 
+app.MapGet("/", () => Results.Ok(new { servico = "Receitas API", status = "ok" }));
+app.MapGet("/health", () => Results.Ok("ok"));
 app.MapControllers();
 
 app.Run();

@@ -1,6 +1,6 @@
 import type { ReceitaCompleta, ReceitaRanqueada } from "../types/receita";
 
-const API_URL = "http://localhost:5222";
+const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:5222";
 
 export async function buscarReceitas(
   ingredientes: string[]
