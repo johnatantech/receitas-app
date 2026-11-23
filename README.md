@@ -1,12 +1,13 @@
 # 🍳 Receitas por ingredientes
 
+[![CI](https://github.com/johnatantech/receitas-app/actions/workflows/ci.yml/badge.svg)](https://github.com/johnatantech/receitas-app/actions/workflows/ci.yml)
+
 Aplicação full-stack que responde à pergunta *"o que eu consigo cozinhar com o que tenho em casa?"*. Você informa os ingredientes em português e o app mostra receitas **ranqueadas por compatibilidade**, indicando o que você já tem e o que falta.
 
 > **Demo:** https://receitas-app-eta.vercel.app
 >
 > A API roda em plano gratuito e hiberna após 15 minutos sem uso: a primeira busca pode levar cerca de 1 minuto para responder.
 
-<!-- Troque pelos seus arquivos em docs/ -->
 ![Busca por ingredientes](docs/busca.gif)
 
 | Busca | Detalhe da receita |
@@ -105,6 +106,14 @@ Abra `http://localhost:5173`. A API libera CORS para essa origem.
 dotnet test
 ```
 
+Para conferir o front-end como o CI faz:
+
+```bash
+cd src/receitas-web
+npm run lint
+npm run build
+```
+
 ### Configuração opcional
 
 A MyMemory tem cota diária gratuita maior quando se informa um e-mail. Para não versionar o e-mail, use o *user-secrets*:
@@ -170,6 +179,18 @@ Variáveis de ambiente da API:
 
 Cada `git push` na `main` republica o front e a API automaticamente.
 
+## 🔄 Integração contínua
+
+O workflow [`ci.yml`](.github/workflows/ci.yml) roda no GitHub Actions a cada push e pull request na `main`, com três jobs:
+
+| Job | O que verifica |
+|---|---|
+| **API (.NET)** | Restaura, compila em Release tratando avisos como erro e roda os testes xUnit com cobertura. Os resultados (`.trx`) e a cobertura ficam disponíveis como artefato por 14 dias |
+| **Front-end (React)** | `npm ci`, lint com oxlint e build com TypeScript + Vite |
+| **Imagem Docker** | Compila a imagem da API usada no deploy do Render, depois que os testes passam |
+
+Detalhes do pipeline: cache de pacotes NuGet e npm para execuções mais rápidas, cancelamento automático de execuções antigas do mesmo branch e permissão mínima (`contents: read`).
+
 ## ⚠️ Limitações conhecidas
 
 - O casamento de ingredientes é por palavra: `rice` também casa com `rice vinegar`.
@@ -189,7 +210,8 @@ Cada `git push` na `main` republica o front e a API automaticamente.
 - [ ] Lista de compras com os ingredientes que faltam
 - [ ] Cache persistente (SQLite ou Redis)
 - [ ] Testes de integração do controller e testes de front (Vitest + Testing Library)
-- [ ] Pipeline de CI (build + testes) com GitHub Actions
+- [x] Pipeline de CI (build, testes, lint e imagem Docker) com GitHub Actions
+- [ ] Proteção do branch `main` exigindo CI verde antes do merge
 
 ## 📄 Licença
 
