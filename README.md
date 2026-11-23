@@ -2,7 +2,9 @@
 
 Aplicação full-stack que responde à pergunta *"o que eu consigo cozinhar com o que tenho em casa?"*. Você informa os ingredientes em português e o app mostra receitas **ranqueadas por compatibilidade**, indicando o que você já tem e o que falta.
 
-> <!-- **Demo:** _(link do deploy aqui)_
+> **Demo:** https://receitas-app-eta.vercel.app
+>
+> A API roda em plano gratuito e hiberna após 15 minutos sem uso: a primeira busca pode levar cerca de 1 minuto para responder.
 
 <!-- Troque pelos seus arquivos em docs/ -->
 ![Busca por ingredientes](docs/busca.gif)
@@ -152,13 +154,30 @@ Exemplo de item da busca:
 
 **Acessibilidade.** Os indicadores ✓, ✗ e • têm formas distintas e `aria-label`, sem depender só de cor. A barra de compatibilidade usa `role="progressbar"`, e erros usam `role="alert"`.
 
+## ☁️ Deploy
+
+| Parte | Hospedagem | Observações |
+|---|---|---|
+| Front-end | [Vercel](https://vercel.com) | Root `src/receitas-web`; variável `VITE_API_URL` aponta para a API; `vercel.json` reescreve as rotas para o `index.html` (SPA) |
+| API | [Render](https://render.com) (Docker, plano gratuito) | `Dockerfile` na raiz; a porta vem da variável `PORT`; health check em `/health` |
+
+Variáveis de ambiente da API:
+
+| Variável | Para quê |
+|---|---|
+| `Cors__Origins` | Origens do front liberadas no CORS, separadas por vírgula (sem barra no final) |
+| `Traducao__Email` | Opcional: amplia a cota gratuita da MyMemory |
+
+Cada `git push` na `main` republica o front e a API automaticamente.
+
 ## ⚠️ Limitações conhecidas
 
 - O casamento de ingredientes é por palavra: `rice` também casa com `rice vinegar`.
 - Ingredientes fora do dicionário aparecem em inglês.
 - A tradução automática pode errar termos culinários. Por isso o app avisa e oferece o original.
 - Os títulos dos pratos permanecem em inglês, porque nomes de pratos traduzidos automaticamente costumam ficar estranhos.
-- O cache é em memória e zera quando a API reinicia.
+- O cache é em memória e zera quando a API reinicia ou hiberna.
+- No plano gratuito do Render, a API hiberna após 15 minutos sem tráfego e a primeira requisição depois disso leva cerca de 1 minuto.
 - A TheMealDB tem catálogo limitado e foco em culinária internacional.
 
 ## 🗺️ Próximos passos
