@@ -12,6 +12,9 @@ public class MyMemoryTradutor : ITradutor
     private const int MaxChars = 450;
     private static readonly TimeSpan TempoCache = TimeSpan.FromDays(30);
 
+    private static readonly Regex Tags = new(@"<[^>]+>", RegexOptions.Compiled);
+    private static readonly Regex EspacosMultiplos = new(@"[ \t]{2,}", RegexOptions.Compiled);
+
     private readonly HttpClient _http;
     private readonly IMemoryCache _cache;
     private readonly IConfiguration _config;
@@ -31,7 +34,8 @@ public class MyMemoryTradutor : ITradutor
     {
         if (string.IsNullOrWhiteSpace(texto)) return texto;
 
-        var chave = "trad:" + Convert.ToHexString(
+        // "v2" na chave: invalida traduções antigas que ficaram com tags
+        var chave = "trad:v2:" + Convert.ToHexString(
             SHA256.HashData(Encoding.UTF8.GetBytes(texto)));
 
         if (_cache.TryGetValue(chave, out string? pronto)) return pronto;
@@ -50,7 +54,9 @@ public class MyMemoryTradutor : ITradutor
                 return string.Join(' ', partes);
             }));
 
-            var resultado = string.Join("\n", traduzidos);
+            var resultado = string.Join("\n",
+                traduzidos.Where(t => !string.IsNullOrWhiteSpace(t)));
+
             _cache.Set(chave, resultado, TempoCache); // só guarda se deu tudo certo
             return resultado;
         }
@@ -87,9 +93,19 @@ public class MyMemoryTradutor : ITradutor
             || traduzido.Contains("MYMEMORY WARNING", StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException($"MyMemory respondeu status {status}.");
 
-      // A MyMemory às vezes devolve tags internas (<g id="1">, <x id="2"/>)
-var semTags = Regex.Replace(traduzido, @"<[^>]+>", " ");
-return Regex.Replace(WebUtility.HtmlDecode(semTags), @"\s{2,}", " ").Trim();
+        return Limpar(traduzido);
+    }
+
+    /// <summary>
+    /// Remove entidades HTML e as tags internas que a MyMemory às vezes devolve
+    /// (ex.: &lt;g id="1"&gt;, &lt;x id="2"/&gt;), mantendo o texto que estava dentro delas.
+    /// </summary>
+    public static string Limpar(string traduzido)
+    {
+        // Decodifica antes: a API pode devolver "&lt;g id=&quot;1&quot;&gt;" escapado
+        var decodificado = WebUtility.HtmlDecode(traduzido);
+        var semTags = Tags.Replace(decodificado, " ");
+        return EspacosMultiplos.Replace(semTags, " ").Trim();
     }
 
     /// <summary>Divide em trechos de até <paramref name="max"/> caracteres, cortando em frases.</summary>
